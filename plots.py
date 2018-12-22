@@ -17,7 +17,7 @@ def quiverplot_final_state(x,v,J):
     q = ax.quiver(x[i,:,0], x[i,:,1], x[i,:,2],
                   v[i,:,0], v[i,:,1], v[i,:,2])
 
-    plt.savefig(('CollectiveMotion_'+str(J)+'.png'), dpi=80)
+    plt.savefig(('figures/CollectiveMotion_'+str(J)+'.png'), dpi=80)
 
     plt.show()
 
@@ -60,7 +60,7 @@ def quiverplot_animation(x,v,J,lim=0.5):
         return q,
 
     anim = FuncAnimation(fig, update, len(x), blit=False, interval=30)
-    anim.save(('CollectiveMotion_'+str(J)+'.gif'), dpi=80, writer='imagemagick')
+    anim.save(('figures/CollectiveMotion_'+str(J)+'.gif'), dpi=80, writer='imagemagick')
     plt.show()
 
 
@@ -86,14 +86,15 @@ def main():
     J = 0.2
 
     cm = CollectiveMotion()
-    t0 = time.time()
-    x,v = cm.simulate_particles(J = J,
-                                N = 512,
-                                n_steps = 400)
-    t1 = time.time()
-    print 'simulation took %.05f seconds' % (t1 - t0)
-    quiverplot_final_state(x,v,J)
-    quiverplot_animation(x,v,J)
+    for J in (0.001, 0.2):
+        t0 = time.time()
+        x,v = cm.simulate_particles(J = J,
+                                    N = 512,
+                                    n_steps = 400)
+        t1 = time.time()
+        print 'simulation took %.05f seconds' % (t1 - t0)
+        quiverplot_final_state(x,v,J)
+        quiverplot_animation(x,v,J)
     phase_change_plot(cm)
 
 
