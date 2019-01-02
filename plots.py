@@ -68,14 +68,14 @@ def phase_change_plot(cm):
     va = []
     vm = []
 
-    J_  = np.arange(0.0, 0.2, 0.0025)
-    J__ = np.repeat(J_, 10)
+    J_  = np.arange(0.0, 0.2, 0.03)
+    J__ = np.repeat(J_, 1)
     
     for J in J__:
         va_ = cm.calculate_mean_velocity(J = J,
-                                         N = 128,
+                                         N = 512,
                                          v0 = 0.05,
-                                         n_steps = 1000)
+                                         n_steps = 400)
 
         va.append(va_)
         print J, va_
@@ -93,15 +93,15 @@ def phase_change_plot(cm):
 
 def main():
     cm = CollectiveMotion()
-    for J in (0.001, 0.07, 0.2):
-        t0 = time.time()
-        x,v = cm.simulate_particles(J = J,
-                                    N = 512,
-                                    n_steps = 800)
-        t1 = time.time()
-        print 'simulation took %.05f seconds' % (t1 - t0)
-        quiverplot_final_state(x,v,J)
-        quiverplot_animation(x,v,J)
+    # for J in (0.001, 0.07, 0.2):
+    #     t0 = time.time()
+    #     x,v = cm.simulate_particles(J = J,
+    #                                 N = 128,
+    #                                 n_steps = 1200)
+    #     t1 = time.time()
+    #     print 'simulation took %.05f seconds' % (t1 - t0)
+    #     quiverplot_final_state(x,v,J)
+    #     quiverplot_animation(x,v,J)
 
     phase_change_plot(cm)
 

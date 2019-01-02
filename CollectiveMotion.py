@@ -42,7 +42,7 @@ class CollectiveMotion:
             n, d = neighbourhood(X)
             return T.sum(Y[n], axis=0)
 
-        def cohesion(X):
+        def cohesion(X, inf=100.0):
             D    = distance_tensor(X)
             E    = direction_tensor(X)
             n, d = neighbourhood(X)
@@ -76,7 +76,15 @@ class CollectiveMotion:
 
             return T.cast(X_, 'float32'), T.cast(V, 'float32')
 
-    
+        
+        def probability(X,Y):
+            n, d = neighbourhood(X)
+            vDv  = T.batched_dot(Y[n].swapaxes(0,1), Y)
+            p    = T.exp((j / 2.0) * T.sum(vDv, axis=1))
+
+            return p / T.sum(p)
+
+
         sim, update = theano.scan(step,
                                   outputs_info=[pos,vel],
                                   n_steps=n_steps)
@@ -85,15 +93,19 @@ class CollectiveMotion:
 
         mean_final_velocity = 1 / (N * v0) * T.sqrt(T.sum(T.square(T.sum(vel_[-1], axis=0))))
 
+        particle_probability = probability(pos_[-1], vel_[-1])
+
         self.f = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
                                  [pos_, vel_], 
-                                 allow_input_downcast=True,
-                                 on_unused_input='ignore')
+                                 allow_input_downcast=True)
 
         self.g = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
                                  mean_final_velocity, 
-                                 allow_input_downcast=True,
-                                 on_unused_input='ignore')
+                                 allow_input_downcast=True)
+
+        self.h = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
+                                 particle_probability, 
+                                 allow_input_downcast=True)
 
 
     def simulate_particles(self,
@@ -138,3 +150,26 @@ class CollectiveMotion:
 
         mean_final_velocity = self.g(test_pos, test_vel, nc, ra, rb, r0, re, J, v0, b, N, n_steps)
         return mean_final_velocity
+
+
+
+    def calculate_probability(self,
+                              J       = 0.02,
+                              N       = 256,
+                              nc      = 20,
+                              ra      = 0.8,
+                              rb      = 0.2,
+                              re      = 0.5,
+                              r0      = 1.0,
+                              v0      = 0.05,
+                              b       = 5.0,
+                              n_steps = 500):
+        test_nu = np.random.uniform(0.0, np.pi, size=(N,2))
+        test_r  = np.random.uniform(0.0, 1.0, size=(N,1))
+        test_pos = test_r * np.column_stack([np.sin(2.0*test_nu[:,0]) * np.sin(test_nu[:,1]), 
+                                            np.cos(2.0*test_nu[:,0]) * np.sin(test_nu[:,1]), 
+                                            np.cos(test_nu[:,1])])
+        test_vel = np.zeros((N,3))
+
+        probability = self.h(test_pos, test_vel, nc, ra, rb, r0, re, J, v0, b, N, n_steps)
+        return probability
