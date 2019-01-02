@@ -21,9 +21,9 @@ class CollectiveMotion:
 
 
         def distance_tensor(X):
-                E = X.reshape((X.shape[0], 1, -1)) - X.reshape((1, X.shape[0], -1))
-                D = T.sqrt(T.sum(T.square(E), axis=2))
-                return D
+            E = X.reshape((X.shape[0], 1, -1)) - X.reshape((1, X.shape[0], -1))
+            D = T.sqrt(T.sum(T.square(E), axis=2))
+            return D
 
         def direction_tensor(X):
             E = X.reshape((X.shape[0], 1, -1)) - X.reshape((1, X.shape[0], -1))
@@ -81,10 +81,19 @@ class CollectiveMotion:
                                   outputs_info=[pos,vel],
                                   n_steps=n_steps)
 
+        pos_, vel_ = sim
+
+        mean_final_velocity = 1 / (N * v0) * T.sqrt(T.sum(T.square(T.sum(vel_[-1], axis=0))))
+
         self.f = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
-                                  sim,
-                                  allow_input_downcast=True,
-                                  on_unused_input='ignore')
+                                 [pos_, vel_], 
+                                 allow_input_downcast=True,
+                                 on_unused_input='ignore')
+
+        self.g = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
+                                 mean_final_velocity, 
+                                 allow_input_downcast=True,
+                                 on_unused_input='ignore')
 
 
     def simulate_particles(self,
@@ -107,3 +116,25 @@ class CollectiveMotion:
 
         x, v = self.f(test_pos, test_vel, nc, ra, rb, r0, re, J, v0, b, N, n_steps)
         return x,v
+
+
+    def calculate_mean_velocity(self,
+                                J       = 0.02,
+                                N       = 256,
+                                nc      = 20,
+                                ra      = 0.8,
+                                rb      = 0.2,
+                                re      = 0.5,
+                                r0      = 1.0,
+                                v0      = 0.05,
+                                b       = 5.0,
+                                n_steps = 500):
+        test_nu = np.random.uniform(0.0, np.pi, size=(N,2))
+        test_r  = np.random.uniform(0.0, 1.0, size=(N,1))
+        test_pos = test_r * np.column_stack([np.sin(2.0*test_nu[:,0]) * np.sin(test_nu[:,1]), 
+                                            np.cos(2.0*test_nu[:,0]) * np.sin(test_nu[:,1]), 
+                                            np.cos(test_nu[:,1])])
+        test_vel = np.zeros((N,3))
+
+        mean_final_velocity = self.g(test_pos, test_vel, nc, ra, rb, r0, re, J, v0, b, N, n_steps)
+        return mean_final_velocity
