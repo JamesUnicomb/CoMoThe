@@ -66,17 +66,27 @@ def quiverplot_animation(x,v,J,lim=0.5):
 
 def phase_change_plot(cm):
     va = []
-    J_ = np.repeat(np.arange(0.0, 0.2, 0.0025), 5)
-    for J in J_:
+    vm = []
+
+    J_  = np.arange(0.0, 0.2, 0.0025)
+    J__ = np.repeat(J_, 10)
+    
+    for J in J__:
         va_ = cm.calculate_mean_velocity(J = J,
-                                         N = 256,
+                                         N = 128,
                                          v0 = 0.05,
-                                         n_steps = 500)
+                                         n_steps = 1000)
 
         va.append(va_)
         print J, va_
 
-    plt.scatter(J_, va)
+    va = np.array(va)
+ 
+    for J in J_:
+        vm.append(np.mean(va[J__ == J]))
+
+    plt.scatter(J__, va, alpha=0.1)
+    plt.plot(J_, vm)
     plt.savefig('figures/phase_change_J.png')
     plt.show()
 
