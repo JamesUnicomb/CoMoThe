@@ -93,17 +93,17 @@ def phase_change_plot(cm):
 
 def main():
     cm = CollectiveMotion()
-    # for J in (0.001, 0.07, 0.2):
-    #     t0 = time.time()
-    #     x,v = cm.simulate_particles(J = J,
-    #                                 N = 128,
-    #                                 n_steps = 1200)
-    #     t1 = time.time()
-    #     print 'simulation took %.05f seconds' % (t1 - t0)
-    #     quiverplot_final_state(x,v,J)
-    #     quiverplot_animation(x,v,J)
+    for J in (0.001, 0.07, 0.2):
+        t0 = time.time()
+        x,v = cm.simulate_particles(J = J,
+                                    N = 512,
+                                    n_steps = 400)
+        t1 = time.time()
+        print 'simulation took %.05f seconds' % (t1 - t0)
+        quiverplot_final_state(x,v,J)
+        #quiverplot_animation(x,v,J)
 
-    phase_change_plot(cm)
+    #phase_change_plot(cm)
 
 
 if __name__=='__main__':

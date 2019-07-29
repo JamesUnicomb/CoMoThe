@@ -96,7 +96,7 @@ class CollectiveMotion:
         particle_probability = probability(pos_[-1], vel_[-1])
 
         self.f = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
-                                 [pos_, vel_], 
+                                 [pos_, vel_],
                                  allow_input_downcast=True)
 
         self.g = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
