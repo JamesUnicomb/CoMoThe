@@ -7,23 +7,30 @@ from mpl_toolkits.mplot3d import Axes3D
 from CollectiveMotion import CollectiveMotion
 
 
+def data_for_cylinder_along_z(radius = 1.0, height = 0.5):
+    z = np.linspace(-height/2, height/2, 50)
+    theta = np.linspace(0, 2*np.pi, 50)
+    theta_grid, z_grid=np.meshgrid(theta, z)
+    x_grid = radius*np.cos(theta_grid)
+    y_grid = radius*np.sin(theta_grid)
+    return x_grid, y_grid, z_grid
+
+
 def quiverplot_final_state(x,v,J):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     strtitle = 'J = %.03f' % (J)
     plt.suptitle(strtitle)
     
-    phi, theta = np.mgrid[0.0:np.pi:100j, 0.0:2.0*np.pi:100j]
-    sx = np.sin(phi) * np.cos(theta)
-    sy = np.sin(phi) * np.sin(theta)
-    sz = np.cos(phi)
+    
+    sx, sy, sz = data_for_cylinder_along_z()
     s = ax.plot_surface(sx, sy, sz,  rstride=1, cstride=1, color='C0', alpha=0.2, linewidth=0)
 
     i = -1
     q = ax.quiver(x[i,:,0], x[i,:,1], x[i,:,2],
                   v[i,:,0], v[i,:,1], v[i,:,2])
                   
-
+    ax.view_init(0.0, 0.0)
 
     plt.savefig(('figures/CollectiveMotion_'+str(J)+'.png'), dpi=80)
 
@@ -42,15 +49,14 @@ def quiverplot_animation(x,v,J,lim=1.0):
     q = ax.quiver(x[i,:,0], x[i,:,1], x[i,:,2],
                   v[i,:,0], v[i,:,1], v[i,:,2])
                   
-    phi, theta = np.mgrid[0.0:np.pi:100j, 0.0:2.0*np.pi:100j]
-    sx = np.sin(phi) * np.cos(theta)
-    sy = np.sin(phi) * np.sin(theta)
-    sz = np.cos(phi)
-    #s = ax.plot_surface(sx, sy, sz,  rstride=1, cstride=1, color='C0', alpha=0.2, linewidth=0)
+    sx, sy, sz = data_for_cylinder_along_z()
+    s = ax.plot_surface(sx, sy, sz,  rstride=1, cstride=1, color='C0', alpha=0.2, linewidth=0)
 
     ax.set_xlim([-lim, lim])
     ax.set_ylim([-lim, lim])
     ax.set_zlim([-lim, lim])
+    
+    ax.view_init(0.0, 0.0)
 
     def update(i):
         print 'frame %d' % (i)
@@ -59,6 +65,7 @@ def quiverplot_animation(x,v,J,lim=1.0):
 
         q = ax.quiver(x[i,:,0], x[i,:,1], x[i,:,2],
                       v[i,:,0], v[i,:,1], v[i,:,2])
+        s = ax.plot_surface(sx, sy, sz,  rstride=1, cstride=1, color='C0', alpha=0.2, linewidth=0)
 
         ax.set_xlim([-lim, lim])
         ax.set_ylim([-lim, lim])
@@ -102,11 +109,11 @@ def phase_change_plot(cm):
 
 def main():
     cm = CollectiveMotion()
-    for J in (0.2,):
+    for J in (0.1,):
         t0 = time.time()
         x,v = cm.simulate_particles(J = J,
                                     N = 1024,
-                                    n_steps = 400)
+                                    n_steps = 600)
         t1 = time.time()
         print 'simulation took %.05f seconds' % (t1 - t0)
         quiverplot_final_state(x,v,J)

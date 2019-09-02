@@ -9,7 +9,7 @@ trng = RandomStreams(rng.randint(999999))
 
 class CollectiveMotion:
     def __init__(self,
-                 inf     = 1e37):
+                 inf     = 1e10):
 
         pos, vel       = T.fmatrices(['pos', 'vel'])
         nc, N, n_steps = T.iscalars(['nc', 'N', 'n_steps'])
@@ -80,11 +80,37 @@ class CollectiveMotion:
             B = T.set_subtensor(B[c], inf*eX[c])
             
             return B
+        
+        
+        def cylinder_boundary(X, radius=1.0, height=0.5):
+            lX = T.sqrt(T.square(X[:,0]) + T.square(X[:,1]))
+            rc = T.gt(lX, radius)
+            zc = T.gt(T.abs_(X[:,2]), height/2)
+            
+            lX = lX.reshape(lX.shape[0],1)
+            lX = T.stack([lX, lX, lX], axis=1)
+            
+            eX  = -X / lX
+            
+            C = T.zeros_like(X)
+            
+            C = T.set_subtensor(C[rc,0], eX[rc,0])
+            C = T.set_subtensor(C[rc,1], eX[rc,1])
+            C = T.set_subtensor(C[zc,2], -T.sgn(X[zc,2]))
+            
+            return inf*C
 
 
-        def step(X,dX):
+        def step(X,dX,boundary='cylinder'):
             X_ = X + dX
-            V_ = j * nc / v0 * (alignment(X, dX)) + b * (cohesion(X)) + nc * (perturbation()) + nc * sphere_boundary(X)
+            
+            if boundary == 'cylinder':
+                V_ = j * nc / v0 * (alignment(X, dX)) + b * (cohesion(X)) + nc * (perturbation()) + nc * cylinder_boundary(X)
+            elif boundary == 'sphere':
+                V_ = j * nc / v0 * (alignment(X, dX)) + b * (cohesion(X)) + nc * (perturbation()) + nc * sphere_boundary(X)
+            else:
+                V_ = j * nc / v0 * (alignment(X, dX)) + b * (cohesion(X)) + nc * (perturbation())
+            
             dV = T.sqrt(T.sum(T.square(V_), axis=1)).reshape(V_.shape[0],1)
             dV = T.stack([dV, dV, dV], axis=1)
             V  = v0 * V_ / dV
