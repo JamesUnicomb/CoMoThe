@@ -15,8 +15,7 @@ class CollectiveMotion:
         nc, N, n_steps = T.iscalars(['nc', 'N', 'n_steps'])
         ra, rb, re, r0 = T.fscalars(['ra', 'rb', 're', 'r0'])
         v0, j, b       = T.fscalars(['v0', 'J', 'b'])
-
-
+        
         nu = trng.uniform(size=(N,2), low=0.0, high=3.14159, dtype='floatX')
 
 
@@ -42,7 +41,7 @@ class CollectiveMotion:
             n, d = neighbourhood(X)
             return T.sum(Y[n], axis=0)
 
-        def cohesion(X, inf=100.0):
+        def cohesion(X, inf=inf):
             D    = distance_tensor(X)
             E    = direction_tensor(X)
             n, d = neighbourhood(X)
@@ -66,10 +65,26 @@ class CollectiveMotion:
             theta = 2.0 * nu[:,1]
 
             return T.stack([T.sin(theta) * T.sin(phi), T.cos(theta) * T.sin(phi), T.cos(phi)], axis=1)
+        
+        def sphere_boundary(X, radius=1.0):
+            lX = T.sqrt(T.sum(T.square(X), axis=1))
+            lX = lX.reshape(lX.shape[0],1)
+            lX = T.stack([lX, lX, lX], axis=1)
+            
+            eX  = -X / lX
+        
+            B = T.zeros_like(X)
+            
+            c = T.gt(lX, radius)
+            
+            B = T.set_subtensor(B[c], inf*eX[c])
+            
+            return B
+
 
         def step(X,dX):
             X_ = X + dX
-            V_ = j * nc / v0 * (alignment(X, dX)) + b * (cohesion(X)) + nc * (perturbation())
+            V_ = j * nc / v0 * (alignment(X, dX)) + b * (cohesion(X)) + nc * (perturbation()) + nc * sphere_boundary(X)
             dV = T.sqrt(T.sum(T.square(V_), axis=1)).reshape(V_.shape[0],1)
             dV = T.stack([dV, dV, dV], axis=1)
             V  = v0 * V_ / dV
@@ -97,15 +112,18 @@ class CollectiveMotion:
 
         self.f = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
                                  [pos_, vel_],
-                                 allow_input_downcast=True)
+                                 allow_input_downcast=True,
+                                 on_unused_input='ignore')
 
         self.g = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
                                  mean_final_velocity, 
-                                 allow_input_downcast=True)
+                                 allow_input_downcast=True,
+                                 on_unused_input='ignore')
 
         self.h = theano.function([pos, vel, nc, ra, rb, r0, re, j, v0, b, N, n_steps],
                                  particle_probability, 
-                                 allow_input_downcast=True)
+                                 allow_input_downcast=True,
+                                 on_unused_input='ignore')
 
 
     def simulate_particles(self,
