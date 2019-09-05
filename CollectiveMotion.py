@@ -167,7 +167,7 @@ class CollectiveMotion:
         test_r  = np.random.uniform(0.0, 1.0, size=(N,1))
         test_pos = test_r * np.column_stack([np.sin(2.0*test_nu[:,0]) * np.sin(test_nu[:,1]), 
                                             np.cos(2.0*test_nu[:,0]) * np.sin(test_nu[:,1]), 
-                                            np.cos(test_nu[:,1])])
+                                            np.random.uniform(-0.5, 0.5, size=(N,1))])
         test_vel = np.zeros((N,3))
 
         x, v = self.f(test_pos, test_vel, nc, ra, rb, r0, re, J, v0, b, N, n_steps)

@@ -30,7 +30,7 @@ def quiverplot_final_state(x,v,J):
     q = ax.quiver(x[i,:,0], x[i,:,1], x[i,:,2],
                   v[i,:,0], v[i,:,1], v[i,:,2])
                   
-    ax.view_init(0.0, 0.0)
+    ax.view_init(90.0, 0.0)
 
     plt.savefig(('figures/CollectiveMotion_'+str(J)+'.png'), dpi=80)
 
@@ -50,13 +50,13 @@ def quiverplot_animation(x,v,J,lim=1.0):
                   v[i,:,0], v[i,:,1], v[i,:,2])
                   
     sx, sy, sz = data_for_cylinder_along_z()
-    s = ax.plot_surface(sx, sy, sz,  rstride=1, cstride=1, color='C0', alpha=0.2, linewidth=0)
+    
 
     ax.set_xlim([-lim, lim])
     ax.set_ylim([-lim, lim])
     ax.set_zlim([-lim, lim])
     
-    ax.view_init(0.0, 0.0)
+    ax.view_init(90.0, 0.0)
 
     def update(i):
         print 'frame %d' % (i)
@@ -65,7 +65,7 @@ def quiverplot_animation(x,v,J,lim=1.0):
 
         q = ax.quiver(x[i,:,0], x[i,:,1], x[i,:,2],
                       v[i,:,0], v[i,:,1], v[i,:,2])
-        s = ax.plot_surface(sx, sy, sz,  rstride=1, cstride=1, color='C0', alpha=0.2, linewidth=0)
+        
 
         ax.set_xlim([-lim, lim])
         ax.set_ylim([-lim, lim])
@@ -80,46 +80,18 @@ def quiverplot_animation(x,v,J,lim=1.0):
     plt.show()
 
 
-def phase_change_plot(cm):
-    va = []
-    vm = []
-
-    J_  = np.arange(0.0, 0.2, 0.03)
-    J__ = np.repeat(J_, 1)
-    
-    for J in J__:
-        va_ = cm.calculate_mean_velocity(J = J,
-                                         N = 512,
-                                         v0 = 0.05,
-                                         n_steps = 400)
-
-        va.append(va_)
-        print J, va_
-
-    va = np.array(va)
- 
-    for J in J_:
-        vm.append(np.mean(va[J__ == J]))
-
-    plt.scatter(J__, va, alpha=0.1)
-    plt.plot(J_, vm)
-    plt.savefig('figures/phase_change_J.png')
-    plt.show()
-
 
 def main():
     cm = CollectiveMotion()
-    for J in (0.1,):
+    for J in (0.15,):
         t0 = time.time()
         x,v = cm.simulate_particles(J = J,
-                                    N = 1024,
-                                    n_steps = 600)
+                                    N = 512,
+                                    n_steps = 3000)
         t1 = time.time()
         print 'simulation took %.05f seconds' % (t1 - t0)
         quiverplot_final_state(x,v,J)
         quiverplot_animation(x,v,J)
-
-    #phase_change_plot(cm)
 
 
 if __name__=='__main__':
